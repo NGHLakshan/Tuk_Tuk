@@ -11,14 +11,17 @@ import {
   Fuel,
   History,
   FileText,
-  Lock
+  Lock,
+  Trash2,
+  AlertTriangle,
+  Pencil
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { Analytics } from './components/Analytics';
 
 const App = () => {
-  const { data, settings, updateSettings, exportData, addTransaction, getDaySummary, today } = useFinance();
+  const { data, settings, updateSettings, exportData, addTransaction, deleteTransaction, getDaySummary, resetData, today } = useFinance();
   const [activeTab, setActiveTab] = useState('wallet');
   const [showEntry, setShowEntry] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(!settings.pinEnabled);
@@ -27,12 +30,24 @@ const App = () => {
   const [tempPin, setTempPin] = useState('');
   const [pinMessage, setPinMessage] = useState('');
   const [pinError, setPinError] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState(null);
 
   const summary = getDaySummary();
 
   const handleTransaction = (details) => {
     addTransaction(details);
     setShowEntry(null);
+  };
+
+  const handleDeleteTransaction = (id) => {
+    if (confirm('Are you sure you want to delete this transaction?')) {
+      deleteTransaction(id);
+    }
+  };
+
+  const handleEditTransaction = (transaction) => {
+    setEditingTransaction(transaction);
+    setShowEntry(transaction.type);
   };
 
   const verifyPin = (digit) => {
@@ -238,9 +253,23 @@ const App = () => {
                           <p className="text-[10px] text-slate-500 font-medium">{format(new Date(t.timestamp), 'hh:mm a')}</p>
                         </div>
                       </div>
-                      <p className={`font-bold ${t.type === 'income' ? 'text-tuk-emerald' : 'text-tuk-rose'}`}>
-                        {t.type === 'income' ? '+' : '-'} Rs. {Number(t.amount).toLocaleString()}
-                      </p>
+                      <div className="flex items-center gap-1">
+                        <p className={`font-bold mr-2 ${t.type === 'income' ? 'text-tuk-emerald' : 'text-tuk-rose'}`}>
+                          {t.type === 'income' ? '+' : '-'} Rs. {Number(t.amount).toLocaleString()}
+                        </p>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleEditTransaction(t); }}
+                          className="p-2 text-slate-600 hover:text-tuk-amber transition-colors"
+                        >
+                          <Pencil size={16} />
+                        </button>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleDeleteTransaction(t.id); }}
+                          className="p-2 text-slate-600 hover:text-tuk-rose transition-colors"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     </div>
                   ))
                 )}
@@ -306,9 +335,23 @@ const App = () => {
                         </p>
                       </div>
                     </div>
-                    <p className={`font-bold ${t.type === 'income' ? 'text-tuk-emerald' : 'text-tuk-rose'}`}>
-                      {t.type === 'income' ? '+' : '-'} Rs. {Number(t.amount).toLocaleString()}
-                    </p>
+                    <div className="flex items-center gap-1">
+                      <p className={`font-bold mr-2 ${t.type === 'income' ? 'text-tuk-emerald' : 'text-tuk-rose'}`}>
+                        {t.type === 'income' ? '+' : '-'} Rs. {Number(t.amount).toLocaleString()}
+                      </p>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); handleEditTransaction(t); }}
+                        className="p-2 text-slate-600 hover:text-tuk-amber transition-colors"
+                      >
+                        <Pencil size={16} />
+                      </button>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); handleDeleteTransaction(t.id); }}
+                        className="p-2 text-slate-600 hover:text-tuk-rose transition-colors"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </div>
                 ))
               )}
@@ -502,6 +545,30 @@ const App = () => {
                 )}
               </div>
 
+              <div className="glass-card p-5 border-tuk-rose/20 bg-tuk-rose/5">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="p-3 bg-tuk-rose/20 rounded-2xl text-tuk-rose">
+                    <AlertTriangle size={24} />
+                  </div>
+                  <div>
+                    <p className="font-bold text-white">Danger Zone</p>
+                    <p className="text-[10px] text-slate-500 uppercase tracking-widest mt-1">Irreversible Actions</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    if (confirm('CRITICAL: This will PERMANENTLY DELETE all your transactions and reset settings to default. Are you absolutely sure?')) {
+                      resetData();
+                      setActiveTab('wallet');
+                      alert('App has been reset successfully.');
+                    }
+                  }}
+                  className="w-full py-4 bg-tuk-rose/10 border border-tuk-rose/30 rounded-xl text-tuk-rose font-bold hover:bg-tuk-rose hover:text-white transition-all active:scale-[0.98]"
+                >
+                  Reset All Data
+                </button>
+              </div>
+
               <div className="text-center pt-4">
                 <p className="text-[10px] text-slate-600 font-bold uppercase tracking-[0.2em]">Tuk-Tuk Finance v1.0.0</p>
               </div>
@@ -543,10 +610,16 @@ const App = () => {
         {showEntry && (
           <TransactionModal
             type={showEntry}
-            onClose={() => setShowEntry(null)}
+            initialData={editingTransaction}
+            onClose={() => { setShowEntry(null); setEditingTransaction(null); }}
             onSubmit={(val) => {
-              addTransaction({ ...val, type: showEntry });
+              if (editingTransaction) {
+                updateTransaction(editingTransaction.id, val);
+              } else {
+                addTransaction({ ...val, type: showEntry });
+              }
               setShowEntry(null);
+              setEditingTransaction(null);
             }}
           />
         )}
@@ -567,11 +640,11 @@ const NavButton = ({ icon, label, active, onClick }) => (
   </button>
 );
 
-const TransactionModal = ({ type, onClose, onSubmit }) => {
-  const [amount, setAmount] = useState('');
-  const [note, setNote] = useState('');
-  const [category, setCategory] = useState(type === 'income' ? 'passenger' : 'food');
-  const [distance, setDistance] = useState('');
+const TransactionModal = ({ type, onClose, onSubmit, initialData }) => {
+  const [amount, setAmount] = useState(initialData?.amount || '');
+  const [note, setNote] = useState(initialData?.note || '');
+  const [category, setCategory] = useState(initialData?.category || (type === 'income' ? 'passenger' : 'food'));
+  const [distance, setDistance] = useState(initialData?.distance || '');
 
   const categories = type === 'income'
     ? ['passenger', 'service', 'other']
@@ -600,7 +673,7 @@ const TransactionModal = ({ type, onClose, onSubmit }) => {
             <div className={`p-2 rounded-xl ${type === 'income' ? 'bg-tuk-emerald/20 text-tuk-emerald' : 'bg-tuk-rose/20 text-tuk-rose'}`}>
               {type === 'income' ? <PlusCircle size={24} /> : <MinusCircle size={24} />}
             </div>
-            {type === 'income' ? 'Add Income' : 'Add Expense'}
+            {editingTransaction ? 'Edit Entry' : (type === 'income' ? 'Add Income' : 'Add Expense')}
           </h3>
           <button onClick={onClose} className="p-2 text-slate-500 hover:text-white">
             <SettingsIcon className="rotate-45" size={24} />
@@ -673,7 +746,7 @@ const TransactionModal = ({ type, onClose, onSubmit }) => {
             : 'bg-tuk-rose text-white shadow-tuk-rose/20 hover:bg-tuk-rose/90'
             } disabled:opacity-30 active:scale-[0.98] mb-4`}
         >
-          {type === 'income' ? 'Record Earnings' : 'Record Expense'}
+          {initialData ? 'Update Record' : (type === 'income' ? 'Record Earnings' : 'Record Expense')}
         </button>
       </motion.div>
     </motion.div>

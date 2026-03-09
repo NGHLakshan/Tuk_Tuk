@@ -28,6 +28,20 @@ export const useFinance = () => {
         }));
     };
 
+    const deleteTransaction = (id) => {
+        setData(prev => ({
+            ...prev,
+            transactions: prev.transactions.filter(t => t.id !== id)
+        }));
+    };
+
+    const updateTransaction = (id, updatedTransaction) => {
+        setData(prev => ({
+            ...prev,
+            transactions: prev.transactions.map(t => t.id === id ? { ...t, ...updatedTransaction } : t)
+        }));
+    };
+
     const getDaySummary = (date = today) => {
         const dayTransactions = data.transactions.filter(t => t.date === date);
         const income = dayTransactions
@@ -55,6 +69,14 @@ export const useFinance = () => {
         setSettings(prev => ({ ...prev, ...newSettings }));
     };
 
+    const resetData = () => {
+        const defaultSettings = { dailyRent: 1500, startingBalance: 0, pin: '1234', pinEnabled: false };
+        setData({ days: {}, transactions: [] });
+        setSettings(defaultSettings);
+        storage.saveData({ days: {}, transactions: [] });
+        storage.saveSettings(defaultSettings);
+    };
+
     const exportData = () => {
         const csvContent = "data:text/csv;charset=utf-8,"
             + "Date,Type,Amount,Note\n"
@@ -75,7 +97,10 @@ export const useFinance = () => {
         updateSettings,
         exportData,
         addTransaction,
+        deleteTransaction,
+        updateTransaction,
         getDaySummary,
+        resetData,
         today
     };
 };
