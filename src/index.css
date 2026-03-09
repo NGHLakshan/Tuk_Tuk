@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-[#0f172a] text-slate-100 font-sans antialiased min-h-screen;
+    background-image: radial-gradient(circle at top right, rgba(251, 191, 36, 0.05), transparent),
+                      radial-gradient(circle at bottom left, rgba(16, 185, 129, 0.05), transparent);
+  }
+
+  h1, h2, h3, h4 {
+    @apply font-display font-bold;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-slate-800/50 backdrop-blur-md border border-slate-700/50 rounded-2xl p-4;
+  }
+  
+  .btn-primary {
+    @apply bg-tuk-amber text-tuk-dark font-bold py-3 px-6 rounded-xl transition-all active:scale-95 shadow-lg shadow-tuk-amber/20;
+  }
+
+  .btn-secondary {
+    @apply bg-slate-800 text-slate-100 font-semibold py-3 px-6 rounded-xl border border-slate-700 transition-all active:scale-95;
+  }
+}
