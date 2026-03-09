@@ -21,7 +21,7 @@ import { format } from 'date-fns';
 import { Analytics } from './components/Analytics';
 
 const App = () => {
-  const { data, settings, updateSettings, exportData, addTransaction, deleteTransaction, getDaySummary, resetData, today } = useFinance();
+  const { data, settings, updateSettings, exportData, addTransaction, deleteTransaction, updateTransaction, getDaySummary, resetData, today } = useFinance();
   const [activeTab, setActiveTab] = useState('wallet');
   const [showEntry, setShowEntry] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(!settings.pinEnabled);
@@ -673,7 +673,7 @@ const TransactionModal = ({ type, onClose, onSubmit, initialData }) => {
             <div className={`p-2 rounded-xl ${type === 'income' ? 'bg-tuk-emerald/20 text-tuk-emerald' : 'bg-tuk-rose/20 text-tuk-rose'}`}>
               {type === 'income' ? <PlusCircle size={24} /> : <MinusCircle size={24} />}
             </div>
-            {editingTransaction ? 'Edit Entry' : (type === 'income' ? 'Add Income' : 'Add Expense')}
+            {initialData ? 'Edit Entry' : (type === 'income' ? 'Add Income' : 'Add Expense')}
           </h3>
           <button onClick={onClose} className="p-2 text-slate-500 hover:text-white">
             <SettingsIcon className="rotate-45" size={24} />
